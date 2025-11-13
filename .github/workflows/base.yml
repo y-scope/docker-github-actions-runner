@@ -12,6 +12,10 @@ on:
     - cron:  '0 22 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   ubuntu_base_tests:
     runs-on: ubuntu-latest
@@ -43,11 +47,12 @@ jobs:
       - name: set testable image environment variable
         id: testvars
         run: echo "GH_RUNNER_IMAGE=ubuntu-${{ matrix.release }}-${{ env.GIT_SHA }}-${{ matrix.platform }}" >> $GITHUB_ENV
-      - name: Login to DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Retry build and load
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
@@ -107,11 +112,12 @@ jobs:
       - name: set testable image environment variable
         id: testvars
         run: echo "GH_RUNNER_IMAGE=debian-${{ matrix.release }}-${{ env.GIT_SHA }}-${{ matrix.platform }}" >> $GITHUB_ENV
-      - name: Login to DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Retry build
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
@@ -156,11 +162,12 @@ jobs:
           image: tonistiigi/binfmt:qemu-v7.0.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
-      - name: Login to DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Retry build and push
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
@@ -170,7 +177,7 @@ jobs:
             docker buildx build \
               --file Dockerfile.base \
               --platform linux/amd64,linux/arm64 \
-              --tag ${{ env.ORG }}/github-runner-base:latest \
+              --tag ghcr.io/${{ github.repository }}-base:latest \
               --push \
               --pull \
               --cache-from type=gha \
@@ -196,11 +203,12 @@ jobs:
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
       - name: Copy Dockerfile
         run: cp Dockerfile.base Dockerfile.base.ubuntu-${{ matrix.release }}; sed -i.bak 's/FROM.*/FROM ubuntu:${{ matrix.release }}/' Dockerfile.base.ubuntu-${{ matrix.release }}
-      - name: Login to DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Retry build and push
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
@@ -210,7 +218,7 @@ jobs:
             docker buildx build \
               --file Dockerfile.base.ubuntu-${{ matrix.release }} \
               --platform linux/amd64,linux/arm64 \
-              --tag ${{ env.ORG }}/github-runner-base:ubuntu-${{ matrix.release }} \
+              --tag ghcr.io/${{ github.repository }}-base:ubuntu-${{ matrix.release }} \
               --push \
               --pull \
               --cache-from type=gha \
@@ -236,11 +244,12 @@ jobs:
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
       - name: Copy Dockerfile
         run: cp Dockerfile.base Dockerfile.base.debian-${{ matrix.release }}; sed -i.bak 's/FROM.*/FROM debian:${{ matrix.release }}/' Dockerfile.base.debian-${{ matrix.release }}
-      - name: Login to DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Retry build and push
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
@@ -250,7 +259,7 @@ jobs:
             docker buildx build \
               --file Dockerfile.base.debian-${{ matrix.release }} \
               --platform linux/amd64,linux/arm64 \
-              --tag ${{ env.ORG }}/github-runner-base:debian-${{ matrix.release }} \
+              --tag ghcr.io/${{ github.repository }}-base:debian-${{ matrix.release }} \
               --push \
               --pull \
               --cache-from type=gha \
