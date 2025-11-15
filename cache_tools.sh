@@ -14,17 +14,18 @@ export RUNNER_TOOL_CACHE="$TOOL_CACHE"
 export AGENT_TOOLSDIRECTORY="$TOOL_CACHE"
 
 # Find the Node.js runtime installed by the GitHub Actions runner
-NODE_DIR=$(find /actions-runner/externals -name "node*" -type d | head -1)
-if [ -z "$NODE_DIR" ]; then
-  echo "⚠ Warning: Node.js not found in /actions-runner/externals/, skipping tool cache"
+# Look for the node binary itself, not just directories
+NODE_BIN=$(find /actions-runner/externals -name "node" -type f -executable 2>/dev/null | head -1)
+if [ -z "$NODE_BIN" ]; then
+  echo "⚠ Warning: Node.js binary not found in /actions-runner/externals/, skipping tool cache"
   exit 0
 fi
 
-NODE_BIN="$NODE_DIR/bin/node"
-NPM_BIN="$NODE_DIR/bin/npm"
+NODE_DIR=$(dirname "$NODE_BIN")
+NPM_BIN="$NODE_DIR/npm"
 
-if [ ! -f "$NODE_BIN" ]; then
-  echo "⚠ Warning: Node binary not found at $NODE_BIN, skipping tool cache"
+if [ ! -f "$NPM_BIN" ]; then
+  echo "⚠ Warning: npm not found at $NPM_BIN, skipping tool cache"
   exit 0
 fi
 
